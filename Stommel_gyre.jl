@@ -16,14 +16,14 @@ grid = RectilinearGrid(size=(Nx, Ny, 1),
                        x=(0, Lx),     
                        y=(0, Ly), 
                        z=(-Lz,0),    
-                       topology=(Bounded, Bounded, Bounded)
+                       topology=(Bounded, Bounded, Bounded),
                        )
 
 
 # Define the wind stress forcing 
 τ₀ = 0.1       # Maximum wind stress [Nm⁻²]
 ρ = 1025       # Density of seawater [kgm⁻³]
-u_surface_stress(x, y, t) = -τ₀ * sin(π * y / Ly) / ρ  
+u_surface_stress(x, y, t) = -τ₀ * cos(π * y / Ly) / ρ  
 u_surface_bc  = FluxBoundaryCondition(u_surface_stress)
 
 # plot forcing
@@ -43,11 +43,22 @@ v_bottom_drag(x, y, t, v) = -R*v
 u_bottom_bc = FluxBoundaryCondition(u_bottom_drag, field_dependencies=:u)
 v_bottom_bc = FluxBoundaryCondition(v_bottom_drag, field_dependencies=:v)
 
+# Define horizontal boundary condition
+#horizontal_bc = ValueBoundaryCondition(0.0)  # No-slip boundary condition
+horizontal_bc = FluxBoundaryCondition(0.0)   # Free-slip boundary condition
 
-#
-u_bcs = FieldBoundaryConditions(top = u_surface_bc,
-                                bottom = u_bottom_bc)
-v_bcs = FieldBoundaryConditions(bottom = v_bottom_bc)
+# Collect all boundary conditions
+u_bcs = FieldBoundaryConditions(
+    top = u_surface_bc,
+    bottom = u_bottom_bc,
+    north = horizontal_bc,
+    south = horizontal_bc,
+)
+v_bcs = FieldBoundaryConditions(
+    bottom = v_bottom_bc,
+    east = horizontal_bc,
+    west = horizontal_bc,
+)
 
 
 # Define the Coriolis parameter, varying with latitude (simple beta-plane approximation)
@@ -60,6 +71,7 @@ coriolis = BetaPlane(f₀=f₀, β=β)
 model = HydrostaticFreeSurfaceModel(; grid,
                           coriolis = coriolis,
                           boundary_conditions = (u=u_bcs, v=v_bcs),
+                          #closure = ScalarDiffusivity(ν=2e-4, κ=2e-4),
                           )
 
                         
@@ -71,12 +83,12 @@ simulation = Simulation(model, Δt=Δt, stop_time=stop_time)  # Δt is the time 
 # logging simulation progress
 start_time = time_ns()
 progress(sim) = @printf(
-    "i: %d, sim time: % 15s, max(|u|): %.3f ms⁻¹, max(|v|): %.3f ms⁻¹, wall time: %s",
+    "i: %d, sim time: % 15s, max(|u|): %.3f ms⁻¹, max(|v|): %.3f ms⁻¹, wall time: %s\n",
     sim.model.clock.iteration,
     prettytime(sim.model.clock.time),
     maximum(abs, u), 
     maximum(abs, v),
-    prettytime(wall_time)
+    prettytime(1e-9 * (time_ns() - start_time))
 )
 
 simulation.callbacks[:progress] = Callback(progress, IterationInterval(100))
@@ -86,14 +98,17 @@ simulation.callbacks[:progress] = Callback(progress, IterationInterval(100))
 save_interval = 1day
 
 u, v, w = model.velocities
+η = model.free_surface.η
 ζ = ∂x(v) - ∂y(u)
 s = sqrt(u^2 + v^2)
 
 simulation.output_writers[:timeseries] = JLD2OutputWriter(
-    model, (; u, v, ζ, s),
+    model, (; u, v, η, ζ, s
+    ),
     schedule = AveragedTimeInterval(save_interval),
     filename = "stommel_gyre_output.jld2",
-    overwrite_existing = true
+    overwrite_existing = true,
+    with_halos = true,                     # for computation of derivatives at boundaries. Also error for η if this is left out?
 )
                                                         
 
