@@ -18,8 +18,8 @@ v_timeseries = FieldTimeSeries(filename, "v")
 
 times = s_timeseries.times
 
-xc, yc, zc = nodes(s_timeseries[1])
-
+xf, yc, zc = nodes(s_timeseries[1])
+xc, yc, zf = nodes(η_timeseries[1])
 
 # Initialize logging for the animation creation process
 @info "Making an animation from saved data..."
@@ -58,7 +58,7 @@ ax_η = Axis(fig[2, 3]; title = "η [m]", axis_kwargs...)
 fig[1, :] = Label(fig, title, fontsize=24, tellwidth=false)
 
 # Create a heatmap for the speed
-hm_s = heatmap!(ax_s, xc*1e-3, yc*1e-3, sₙ; colorrange = (0,slim), colormap = :speed)
+hm_s = heatmap!(ax_s, xf*1e-3, yc*1e-3, sₙ; colorrange = (0,slim), colormap = :speed)
 Colorbar(fig[2, 2], hm_s)
 
 # Create a heatmap for the speed
@@ -75,12 +75,3 @@ record(fig, figpath*"animated_Stommel_gyre.mp4", frames, framerate=8) do i
     n[] = i             # Update the observable to the current frame index
 end
 
-"""
-Testing streamplot, so far not working
-
-fig = Figure()
-ax_u = Axis(fig[1, 1]; title = "streamlines", axis_kwargs...)
-# create a streamplot for the velocity field
-field(i, j) = Point2f(u_timeseries[Int8(i), Int8(j), 1, end], v_timeseries[Int8(i), Int8(j), 1, end])
-sp_u = streamplot!(ax_u, field, 1..129, 1..128)
-"""
