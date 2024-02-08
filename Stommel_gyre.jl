@@ -77,8 +77,8 @@ model = HydrostaticFreeSurfaceModel(; grid,
 
 
 # set up simulation
-Δt = 1hour
-stop_time = 50days
+Δt = 1minute
+stop_time = 365days
 simulation = Simulation(model, Δt=Δt, stop_time=stop_time)  # Δt is the time step in seconds, stop_time is the total simulation time in seconds
 
 # logging simulation progress
@@ -103,7 +103,8 @@ u, v, w = model.velocities
 ζ = ∂x(v) - ∂y(u)
 s = sqrt(u^2 + v^2)
 
-simulation.output_writers[:timeseries] = JLD2OutputWriter(
+# Writer for JLD2 file format
+simulation.output_writers[:JLD2] = JLD2OutputWriter(
     model, (; u, v, η, ζ, s
     ),
     schedule = AveragedTimeInterval(save_interval),
@@ -111,6 +112,37 @@ simulation.output_writers[:timeseries] = JLD2OutputWriter(
     overwrite_existing = true,
     with_halos = true,                     # for computation of derivatives at boundaries. Also error for η if this is left out?
 )
+
+
+# Info for NetCDFOutputWriter 
+outputs = Dict(
+    "u" => u, 
+    "v" => v,  
+    #"η" => η,     # Oceananigans throws error for writing η. Related to problem with JLD2 when halos not included?
+    "ζ" => ζ,
+    "s" => s,
+    )
+
+output_attributes = Dict(
+    "ζ"  => Dict("long_name" => "Relative vorticity", "units" => "1/s"),
+    "s"  => Dict("long_name" => "Speed", "units" => "m/s"),
+)
+
+# Remove netCDF file if it already exists 
+if isfile("stommel_gyre_output.nc")
+    rm("stommel_gyre_output.nc")
+end
+
+# Writer for netCDF file format
+simulation.output_writers[:netCDF] = NetCDFOutputWriter(
+    model, outputs,
+    output_attributes=output_attributes,
+    schedule = AveragedTimeInterval(save_interval),
+    filename = "stommel_gyre_output.nc",
+    overwrite_existing = true,
+    with_halos = true,                     # for computation of derivatives at boundaries. Also error for η if this is left out?
+)
+
 
 
 # Run the simulation
