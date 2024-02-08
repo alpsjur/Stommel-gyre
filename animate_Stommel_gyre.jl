@@ -4,6 +4,12 @@ using Printf
 using CairoMakie
 
 filename = "stommel_gyre_output.jld2"
+figpath = "figures/"
+
+#check if directory figpath exists. Creates it if it does not exist 
+if !isdir(figpath)
+    mkdir(figpath)
+end
 
 s_timeseries = FieldTimeSeries(filename, "s")
 u_timeseries = FieldTimeSeries(filename, "u")
@@ -63,7 +69,7 @@ Colorbar(fig[2, 4], hm_η)
 frames = 1:length(times)
 
 # Record the animation, updating the figure for each time step
-record(fig, "figures/animated_Stommel_gyre.mp4", frames, framerate=8) do i
+record(fig, figpath*"animated_Stommel_gyre.mp4", frames, framerate=8) do i
     msg = string("Plotting frame ", i, " of ", frames[end])
     print(msg * " \r")  # Log progress without creating a new line for each frame
     n[] = i             # Update the observable to the current frame index
