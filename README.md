@@ -6,7 +6,7 @@ The Stommel gyre is a basic model of ocean circulation in a rectangular basin fo
 
 
 ## Theory
-To be included.
+Her kommer det noe
 
 ## Instructoins to run the model
 To be included. 
