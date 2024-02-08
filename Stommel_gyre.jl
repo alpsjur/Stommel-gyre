@@ -1,10 +1,10 @@
 using Oceananigans             # Ocean model 🌊
-using Oceananigans.Units         
+using Oceananigans.Units
 using Printf                   # formatting text
 using CairoMakie               # plotting
 
 Lx = 1000kilometers
-Ly = 1000kilometers 
+Ly = 1000kilometers
 Lz =    4kilometers
 
 Nx = 128
@@ -12,18 +12,18 @@ Ny = 128
 
 
 # Define the grid
-grid = RectilinearGrid(size=(Nx, Ny, 1),  
-                       x=(0, Lx),     
-                       y=(0, Ly), 
-                       z=(-Lz,0),    
+grid = RectilinearGrid(size=(Nx, Ny, 1),
+                       x=(0, Lx),
+                       y=(0, Ly),
+                       z=(-Lz,0),
                        topology=(Bounded, Bounded, Bounded),
                        )
 
 
-# Define the wind stress forcing 
+# Define the wind stress forcing
 τ₀ = 0.1       # Maximum wind stress [Nm⁻²]
 ρ = 1025       # Density of seawater [kgm⁻³]
-u_surface_stress(x, y, t) = -τ₀ * cos(π * y / Ly) / ρ  
+u_surface_stress(x, y, t) = -τ₀ * cos(π * y / Ly) / ρ
 u_surface_bc  = FluxBoundaryCondition(u_surface_stress)
 
 # plot forcing
@@ -36,9 +36,9 @@ lines!(ax, τ*ρ, y/1000)
 save("figures/surface_forcing.png", fig)
 
 # Define linear bottom drag
-R = 1/60days
-u_bottom_drag(x, y, t, u) = -R*u
-v_bottom_drag(x, y, t, v) = -R*v
+r = 1/60days
+u_bottom_drag(x, y, t, u) = -r*u
+v_bottom_drag(x, y, t, v) = -r*v
 
 u_bottom_bc = FluxBoundaryCondition(u_bottom_drag, field_dependencies=:u)
 v_bottom_bc = FluxBoundaryCondition(v_bottom_drag, field_dependencies=:v)
@@ -63,7 +63,7 @@ v_bcs = FieldBoundaryConditions(
 
 # Define the Coriolis parameter, varying with latitude (simple beta-plane approximation)
 f₀ = 1e-4        # [s⁻¹]
-β = 1e-11        # [m⁻¹s⁻¹]
+β = 2e-11        # [m⁻¹s⁻¹]
 coriolis = BetaPlane(f₀=f₀, β=β)
 
 
@@ -71,13 +71,14 @@ coriolis = BetaPlane(f₀=f₀, β=β)
 model = HydrostaticFreeSurfaceModel(; grid,
                           coriolis = coriolis,
                           boundary_conditions = (u=u_bcs, v=v_bcs),
+                          momentum_advection = nothing,
                           #closure = ScalarDiffusivity(ν=2e-4, κ=2e-4),
                           )
 
-                        
+
 # set up simulation
 Δt = 1hour
-stop_time = 365days
+stop_time = 50days
 simulation = Simulation(model, Δt=Δt, stop_time=stop_time)  # Δt is the time step in seconds, stop_time is the total simulation time in seconds
 
 # logging simulation progress
@@ -86,7 +87,7 @@ progress(sim) = @printf(
     "i: %d, sim time: % 15s, max(|u|): %.3f ms⁻¹, max(|v|): %.3f ms⁻¹, wall time: %s\n",
     sim.model.clock.iteration,
     prettytime(sim.model.clock.time),
-    maximum(abs, u), 
+    maximum(abs, u),
     maximum(abs, v),
     prettytime(1e-9 * (time_ns() - start_time))
 )
@@ -110,9 +111,7 @@ simulation.output_writers[:timeseries] = JLD2OutputWriter(
     overwrite_existing = true,
     with_halos = true,                     # for computation of derivatives at boundaries. Also error for η if this is left out?
 )
-                                                        
+
 
 # Run the simulation
 run!(simulation)
-
-
