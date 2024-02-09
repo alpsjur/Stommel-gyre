@@ -15,8 +15,10 @@ const Ny = 128
 # Run on GPU (wow, fast!) if available. Else run on CPU
 if CUDA.functional()
     architecture = GPU()
+    @info "Running on GPU"
 else
     architecture = CPU()
+    @info "Running on CPU"
 end
 
 # Define the grid
@@ -54,9 +56,9 @@ lines!(ax, τ*ρ, y/1000)
 save(figpath*"surface_forcing.png", fig)
 
 # Define linear bottom drag
-const r = 1/60days
-u_bottom_drag(x, y, t, u) = -r*u
-v_bottom_drag(x, y, t, v) = -r*v
+const R = Lz/60days
+u_bottom_drag(x, y, t, u) = -R*u
+v_bottom_drag(x, y, t, v) = -R*v
 
 u_bottom_bc = FluxBoundaryCondition(u_bottom_drag, field_dependencies=:u)
 v_bottom_bc = FluxBoundaryCondition(v_bottom_drag, field_dependencies=:v)
@@ -95,9 +97,9 @@ model = HydrostaticFreeSurfaceModel(; grid,
 
 
 # set up simulation
-Δt = 20minutes
-stop_time = 2*365days
-simulation = Simulation(model, Δt=Δt, stop_time=stop_time)  # Δt is the time step in seconds, stop_time is the total simulation time in seconds
+Δt = 20minutes           # time step 
+stop_time = 2*365days    # total simulation time 
+simulation = Simulation(model, Δt=Δt, stop_time=stop_time) 
 
 # logging simulation progress
 start_time = time_ns()
