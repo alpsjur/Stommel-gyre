@@ -56,7 +56,7 @@ lines!(ax, τ*ρ, y/1000)
 save(figpath*"surface_forcing.png", fig)
 
 # Define linear bottom drag
-const R = Lz/60days
+const R = Lz/(60days)
 u_bottom_drag(x, y, t, u) = -R*u
 v_bottom_drag(x, y, t, v) = -R*v
 
