@@ -107,19 +107,27 @@ simulation.callbacks[:progress] = Callback(progress, IterationInterval(100))
 
 # Add output writers for saving simulation output
 save_interval = 1day
+
+datapath = "data/"
 filename = "linear_stommel_gyre_output"
+filepath = datapath*filename
+
+#check if directory datapath exists. Creates it if it does not exist 
+if !isdir(datapath)
+    mkdir(datapath)
+end
 
 u, v, w = model.velocities
 η = model.free_surface.η
-ζ = ∂x(v) - ∂y(u)
-s = sqrt(u^2 + v^2)
+ζ = Field(∂x(v) - ∂y(u))
+s = Field(sqrt(u^2 + v^2))
 
 # Writer for JLD2 file format
 simulation.output_writers[:JLD2] = JLD2OutputWriter(
     model, (; u, v, η, ζ, s
     ),
     schedule = AveragedTimeInterval(save_interval),
-    filename = filename,
+    filename = filepath,
     overwrite_existing = true,
     with_halos = true,                     # for computation of derivatives at boundaries. Also error for η if this is left out?
 )
@@ -149,7 +157,7 @@ simulation.output_writers[:netCDF] = NetCDFOutputWriter(
     model, outputs,
     output_attributes=output_attributes,
     schedule = AveragedTimeInterval(save_interval),
-    filename = filename,
+    filename = filepath,
     overwrite_existing = true,
     with_halos = true,                     # for computation of derivatives at boundaries. Also error for η if this is left out?
 )

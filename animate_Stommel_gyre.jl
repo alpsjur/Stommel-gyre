@@ -4,6 +4,7 @@ using Printf
 using CairoMakie
 
 filename = "stommel_gyre_output.jld2"
+datapath = "data/"
 figpath = "figures/"
 
 #check if directory figpath exists. Creates it if it does not exist 
@@ -11,10 +12,12 @@ if !isdir(figpath)
     mkdir(figpath)
 end
 
-s_timeseries = FieldTimeSeries(filename, "s")
-u_timeseries = FieldTimeSeries(filename, "u")
-v_timeseries = FieldTimeSeries(filename, "v")
-η_timeseries = FieldTimeSeries(filename, "η")
+filepath = datapath*filename
+
+s_timeseries = FieldTimeSeries(filepath, "s")
+u_timeseries = FieldTimeSeries(filepath, "u")
+v_timeseries = FieldTimeSeries(filepath, "v")
+η_timeseries = FieldTimeSeries(filepath, "η")
 
 times = s_timeseries.times
 
