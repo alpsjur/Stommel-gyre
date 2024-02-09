@@ -33,6 +33,11 @@ u_surface_bc  = FluxBoundaryCondition(u_surface_stress)
 x, y, z = nodes(grid, (Center(), Center(), Center()))
 τ = u_surface_stress.(1, y, 1)
 
+#check if directory figpath exists. Creates it if it does not exist 
+if !isdir(figpath)
+    mkdir(figpath)
+end
+
 fig = Figure()
 ax = Axis(fig[1, 1], ylabel = "y [km]", xlabel = "Wind stress [Nm⁻²]")
 lines!(ax, τ*ρ, y/1000)
