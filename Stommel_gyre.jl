@@ -3,12 +3,12 @@ using Oceananigans.Units
 using Printf                   # formatting text
 using CairoMakie               # plotting
 
-Lx = 2000kilometers
-Ly = 2000kilometers
-Lz =    4kilometers
+const Lx = 2000kilometers
+const Ly = 2000kilometers
+const Lz =    4kilometers
 
-Nx = 128
-Ny = 128
+const Nx = 128
+const Ny = 128
 
 
 # Define the grid
@@ -24,10 +24,10 @@ grid = RectilinearGrid(
 
 
 # Define the wind stress forcing
-τ₀ = 0.1       # Maximum wind stress [Nm⁻²]
-ρ = 1025       # Density of seawater [kgm⁻³]
-u_surface_stress(x, y, t, τ₀, ρ, Ly) = -τ₀ * cos(π * y / Ly) / ρ
-u_surface_bc  = FluxBoundaryCondition(u_surface_stress, parameters=(τ₀=τ₀, ρ=ρ, Ly=Ly))
+const τ₀ = 0.1       # Maximum wind stress [Nm⁻²]
+const ρ = 1025       # Density of seawater [kgm⁻³]
+u_surface_stress(x, y, t) = -τ₀ * cos(π * y / Ly) / ρ
+u_surface_bc  = FluxBoundaryCondition(u_surface_stress)
 
 # plot forcing
 figpath = "figures/"
@@ -38,7 +38,7 @@ if !isdir(figpath)
 end
 
 x, y, z = nodes(grid, (Center(), Center(), Center()))
-τ = u_surface_stress.(1, y, 1, τ₀, ρ, Ly)
+τ = u_surface_stress.(1, y, 1)
 
 fig = Figure()
 ax = Axis(fig[1, 1], ylabel = "y [km]", xlabel = "Wind stress [Nm⁻²]")
@@ -46,12 +46,12 @@ lines!(ax, τ*ρ, y/1000)
 save(figpath*"surface_forcing.png", fig)
 
 # Define linear bottom drag
-r = 1/60days
-u_bottom_drag(x, y, t, u, r) = -r*u
-v_bottom_drag(x, y, t, v, r) = -r*v
+const r = 1/60days
+u_bottom_drag(x, y, t, u) = -r*u
+v_bottom_drag(x, y, t, v) = -r*v
 
-u_bottom_bc = FluxBoundaryCondition(u_bottom_drag, field_dependencies=:u, parameters=r)
-v_bottom_bc = FluxBoundaryCondition(v_bottom_drag, field_dependencies=:v, parameters=r)
+u_bottom_bc = FluxBoundaryCondition(u_bottom_drag, field_dependencies=:u)
+v_bottom_bc = FluxBoundaryCondition(v_bottom_drag, field_dependencies=:v)
 
 # Define horizontal boundary condition
 #horizontal_bc = ValueBoundaryCondition(0.0)  # No-slip boundary condition
