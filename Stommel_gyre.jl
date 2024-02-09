@@ -13,8 +13,8 @@ Ny = 128
 
 # Define the grid
 grid = RectilinearGrid(
-    #CPU();
-    GPU();
+    CPU();
+    #GPU();
     size=(Nx, Ny, 1),
     x=(0, Lx),
     y=(0, Ly),
@@ -26,8 +26,8 @@ grid = RectilinearGrid(
 # Define the wind stress forcing
 τ₀ = 0.1       # Maximum wind stress [Nm⁻²]
 ρ = 1025       # Density of seawater [kgm⁻³]
-u_surface_stress(x, y, t) = -τ₀ * cos(π * y / Ly) / ρ
-u_surface_bc  = FluxBoundaryCondition(u_surface_stress)
+u_surface_stress(x, y, t, τ₀, ρ, Ly) = -τ₀ * cos(π * y / Ly) / ρ
+u_surface_bc  = FluxBoundaryCondition(u_surface_stress, parameters=(τ₀=τ₀, ρ=ρ, Ly=Ly))
 
 # plot forcing
 figpath = "figures/"
@@ -47,11 +47,11 @@ save(figpath*"surface_forcing.png", fig)
 
 # Define linear bottom drag
 r = 1/60days
-u_bottom_drag(x, y, t, u) = -r*u
-v_bottom_drag(x, y, t, v) = -r*v
+u_bottom_drag(x, y, t, u, r) = -r*u
+v_bottom_drag(x, y, t, v, r) = -r*v
 
-u_bottom_bc = FluxBoundaryCondition(u_bottom_drag, field_dependencies=:u)
-v_bottom_bc = FluxBoundaryCondition(v_bottom_drag, field_dependencies=:v)
+u_bottom_bc = FluxBoundaryCondition(u_bottom_drag, field_dependencies=:u, parameters=r)
+v_bottom_bc = FluxBoundaryCondition(v_bottom_drag, field_dependencies=:v, parameters=r)
 
 # Define horizontal boundary condition
 #horizontal_bc = ValueBoundaryCondition(0.0)  # No-slip boundary condition
