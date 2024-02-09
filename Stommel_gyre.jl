@@ -26,7 +26,8 @@ grid = RectilinearGrid(
 # Define the wind stress forcing
 const τ₀ = 0.1       # Maximum wind stress [Nm⁻²]
 const ρ = 1025       # Density of seawater [kgm⁻³]
-u_surface_stress(x, y, t) = -τ₀ * cos(π * y / Ly) / ρ
+const T = 10days     # Timecale for initial increasing surface forcing
+u_surface_stress(x, y, t) = -τ₀ * cos(π * y / Ly) / ρ * tanh(t/T)
 u_surface_bc  = FluxBoundaryCondition(u_surface_stress)
 
 # plot forcing
@@ -38,7 +39,7 @@ if !isdir(figpath)
 end
 
 x, y, z = nodes(grid, (Center(), Center(), Center()))
-τ = u_surface_stress.(1, y, 1)
+τ = u_surface_stress.(1, y, T*5)
 
 fig = Figure()
 ax = Axis(fig[1, 1], ylabel = "y [km]", xlabel = "Wind stress [Nm⁻²]")
