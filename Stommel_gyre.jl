@@ -38,7 +38,7 @@ if !isdir(figpath)
 end
 
 x, y, z = nodes(grid, (Center(), Center(), Center()))
-τ = u_surface_stress.(1, y, 1)
+τ = u_surface_stress.(1, y, 1, τ₀, ρ, Ly)
 
 fig = Figure()
 ax = Axis(fig[1, 1], ylabel = "y [km]", xlabel = "Wind stress [Nm⁻²]")
