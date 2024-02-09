@@ -2,6 +2,7 @@ using Oceananigans             # Ocean model 🌊
 using Oceananigans.Units
 using Printf                   # formatting text
 using CairoMakie               # plotting
+using CUDA                     # for running on GPU
 
 const Lx = 2000kilometers
 const Ly = 2000kilometers
@@ -11,10 +12,16 @@ const Nx = 128
 const Ny = 128
 
 
+# Run on GPU (wow, fast!) if available. Else run on CPU
+if CUDA.functional()
+    architecture = GPU()
+else
+    architecture = CPU()
+end
+
 # Define the grid
 grid = RectilinearGrid(
-    CPU();
-    #GPU();
+    architecture;
     size=(Nx, Ny, 1),
     x=(0, Lx),
     y=(0, Ly),
@@ -110,7 +117,7 @@ simulation.callbacks[:progress] = Callback(progress, IterationInterval(100))
 save_interval = 1day
 
 datapath = "data/"
-filename = "linear_stommel_gyre_output"
+filename = "stommel_gyre_output"
 filepath = datapath*filename
 
 #check if directory datapath exists. Creates it if it does not exist 
