@@ -31,10 +31,11 @@ n = Observable(1)
 title = @lift @sprintf("%s", prettytime(times[$n]))
 
 # Extract the interior data for the fields at the current time step, dynamically updated
-sₙ = @lift interior(s_timeseries[$n], :, :, 1)
-uₙ = @lift interior(u_timeseries[$n], :, :, 1)
-vₙ = @lift interior(v_timeseries[$n], :, :, 1)
-ηₙ = @lift interior(η_timeseries[$n], :, :, 1)
+# +1 means that initial time-step is skipped. Needed for contour plot
+sₙ = @lift interior(s_timeseries[$n+1], :, :, 1)
+uₙ = @lift interior(u_timeseries[$n+1], :, :, 1)
+vₙ = @lift interior(v_timeseries[$n+1], :, :, 1)
+ηₙ = @lift interior(η_timeseries[$n+1], :, :, 1)
 
 
 # Set limits for the velocity color scale
@@ -48,7 +49,7 @@ axis_kwargs = (xlabel = "x [km]",
                titlesize = 20)
 
 # Create a figure object for the animation
-fig = Figure()
+fig = Figure(size = (1200, 500))
 
 # Create axes for speed
 ax_s = Axis(fig[2, 1]; title = "speed [m/s]", axis_kwargs...)
@@ -62,11 +63,12 @@ hm_s = heatmap!(ax_s, xf*1e-3, yc*1e-3, sₙ; colorrange = (0,slim), colormap = 
 Colorbar(fig[2, 2], hm_s)
 
 # Create a heatmap for the speed
-hm_η = heatmap!(ax_η, xc*1e-3, yc*1e-3, ηₙ; colorrange = (-ηlim,ηlim))
+hm_η = heatmap!(ax_η, xc*1e-3, yc*1e-3, ηₙ; colorrange = (-ηlim,ηlim), colormap = :balance)
+c_η = contour!(ax_η, xc*1e-3, yc*1e-3, ηₙ; color = "black")
 Colorbar(fig[2, 4], hm_η)
 
 # Define the frame range for the animation
-frames = 1:length(times)
+frames = 1:length(times)-1
 
 # Record the animation, updating the figure for each time step
 record(fig, figpath*"animated_Stommel_gyre.mp4", frames, framerate=8) do i
