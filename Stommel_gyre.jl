@@ -3,8 +3,8 @@ using Oceananigans.Units
 using Printf                   # formatting text
 using CairoMakie               # plotting
 
-Lx = 1000kilometers
-Ly = 1000kilometers
+Lx = 2000kilometers
+Ly = 2000kilometers
 Lz =    4kilometers
 
 Nx = 128
@@ -12,12 +12,15 @@ Ny = 128
 
 
 # Define the grid
-grid = RectilinearGrid(size=(Nx, Ny, 1),
-                       x=(0, Lx),
-                       y=(0, Ly),
-                       z=(-Lz,0),
-                       topology=(Bounded, Bounded, Bounded),
-                       )
+grid = RectilinearGrid(
+    #CPU();
+    GPU();
+    size=(Nx, Ny, 1),
+    x=(0, Lx),
+    y=(0, Ly),
+    z=(-Lz,0),
+    topology=(Bounded, Bounded, Bounded),
+)
 
 
 # Define the wind stress forcing
@@ -77,8 +80,8 @@ model = HydrostaticFreeSurfaceModel(; grid,
 
 
 # set up simulation
-Δt = 1minute
-stop_time = 365days
+Δt = 20minutes
+stop_time = 2*365days
 simulation = Simulation(model, Δt=Δt, stop_time=stop_time)  # Δt is the time step in seconds, stop_time is the total simulation time in seconds
 
 # logging simulation progress
@@ -97,6 +100,7 @@ simulation.callbacks[:progress] = Callback(progress, IterationInterval(100))
 
 # Add output writers for saving simulation output
 save_interval = 1day
+filename = "linear_stommel_gyre_output"
 
 u, v, w = model.velocities
 η = model.free_surface.η
@@ -108,7 +112,7 @@ simulation.output_writers[:JLD2] = JLD2OutputWriter(
     model, (; u, v, η, ζ, s
     ),
     schedule = AveragedTimeInterval(save_interval),
-    filename = "stommel_gyre_output.jld2",
+    filename = filename,
     overwrite_existing = true,
     with_halos = true,                     # for computation of derivatives at boundaries. Also error for η if this is left out?
 )
@@ -129,8 +133,8 @@ output_attributes = Dict(
 )
 
 # Remove netCDF file if it already exists 
-if isfile("stommel_gyre_output.nc")
-    rm("stommel_gyre_output.nc")
+if isfile(filename*".nc")
+    rm(filename*".nc")
 end
 
 # Writer for netCDF file format
@@ -138,7 +142,7 @@ simulation.output_writers[:netCDF] = NetCDFOutputWriter(
     model, outputs,
     output_attributes=output_attributes,
     schedule = AveragedTimeInterval(save_interval),
-    filename = "stommel_gyre_output.nc",
+    filename = filename,
     overwrite_existing = true,
     with_halos = true,                     # for computation of derivatives at boundaries. Also error for η if this is left out?
 )
