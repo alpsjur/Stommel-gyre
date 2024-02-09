@@ -3,7 +3,7 @@ using Oceananigans.Units
 using Printf
 using CairoMakie
 
-filename = "stommel_gyre_output.jld2"
+dataname = "nonlinear_stommel_gyre_output.jld2"
 datapath = "data/"
 figpath = "figures/"
 
@@ -12,7 +12,7 @@ if !isdir(figpath)
     mkdir(figpath)
 end
 
-filepath = datapath*filename
+filepath = datapath*dataname
 
 s_timeseries = FieldTimeSeries(filepath, "s")
 u_timeseries = FieldTimeSeries(filepath, "u")
@@ -67,14 +67,17 @@ Colorbar(fig[2, 2], hm_s)
 
 # Create a heatmap for the speed
 hm_η = heatmap!(ax_η, xc*1e-3, yc*1e-3, ηₙ; colorrange = (-ηlim,ηlim), colormap = :balance)
-c_η = contour!(ax_η, xc*1e-3, yc*1e-3, ηₙ; color = "black")
+c_η = contour!(ax_η, xc*1e-3, yc*1e-3, ηₙ; 
+    color = "black", 
+    levels = [-0.06, -0.03, 0, 0.03, 0.06]
+)
 Colorbar(fig[2, 4], hm_η)
 
 # Define the frame range for the animation
 frames = 1:length(times)-1
 
 # Record the animation, updating the figure for each time step
-record(fig, figpath*"animated_Stommel_gyre.mp4", frames, framerate=8) do i
+record(fig, figpath*"animated_nonlinear_Stommel_gyre.mp4", frames, framerate=8) do i
     msg = string("Plotting frame ", i, " of ", frames[end])
     print(msg * " \r")  # Log progress without creating a new line for each frame
     n[] = i             # Update the observable to the current frame index
