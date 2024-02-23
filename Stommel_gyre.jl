@@ -31,12 +31,27 @@ grid = RectilinearGrid(
     topology=(Bounded, Bounded, Bounded),
 )
 
+# Boundary conditions and fluxes
+"""
+From the documentation of Oceananigans:
+The sign convention is such that a positive flux represents the flux of a quantity in the 
+positive direction. For example, a positive vertical flux implies a quantity is fluxed 
+upwards, in the +z direction.
+
+Due to this convention, a positive flux applied to the top boundary specifies that a 
+quantity is fluxed upwards across the top boundary and thus out of the domain. As a result, 
+a positive flux applied to a top boundary leads to a reduction of that quantity in the 
+interior of the domain; for example, a positive, upwards flux of heat at the top of the 
+domain acts to cool the interior of the domain. Conversely, a positive flux applied to the 
+bottom boundary leads to an increase of the quantity in the interior of the domain. The 
+same logic holds for east, west, north, and south boundaries.
+"""
 
 # Define the wind stress forcing
 const τ₀ = 0.1       # Maximum wind stress [Nm⁻²]
 const ρ = 1025       # Density of seawater [kgm⁻³]
 const T = 10days     # Timecale for initial increasing surface forcing
-u_surface_stress(x, y, t) = -τ₀ * cos(π * y / Ly) / ρ * tanh(t/T)
+u_surface_stress(x, y, t) = τ₀ * cos(π * y / Ly) / ρ * tanh(t/T)
 u_surface_bc  = FluxBoundaryCondition(u_surface_stress)
 
 # plot forcing
@@ -52,7 +67,7 @@ x, y, z = nodes(grid, (Center(), Center(), Center()))
 
 fig = Figure()
 ax = Axis(fig[1, 1], ylabel = "y [km]", xlabel = "Wind stress [Nm⁻²]")
-lines!(ax, τ*ρ, y/1000)
+lines!(ax, -τ*ρ, y/1000)              # minus sign comes from the sign convention described above
 save(figpath*"surface_forcing.png", fig)
 
 # Define linear bottom drag
@@ -98,7 +113,7 @@ model = HydrostaticFreeSurfaceModel(; grid,
 
 # set up simulation
 Δt = 20minutes           # time step 
-stop_time = 2*365days    # total simulation time 
+stop_time = 100days      # total simulation time 
 simulation = Simulation(model, Δt=Δt, stop_time=stop_time) 
 
 # logging simulation progress
@@ -128,7 +143,7 @@ if !isdir(datapath)
 end
 
 u, v, w = model.velocities
-η = model.free_surface.η
+η = Average(model.free_surface.η, dims=3)
 ζ = Field(∂x(v) - ∂y(u))
 s = Field(sqrt(u^2 + v^2))
 
@@ -147,14 +162,15 @@ simulation.output_writers[:JLD2] = JLD2OutputWriter(
 outputs = Dict(
     "u" => u, 
     "v" => v,  
-    #"η" => η,     # Oceananigans throws error for writing η. Related to problem with JLD2 when halos not included?
-    "ζ" => ζ,
+    "eta" => η,     # Oceananigans throws error for writing η. Related to problem with JLD2 when halos not included?
+    "zeta" => ζ,
     "s" => s,
     )
 
 output_attributes = Dict(
-    "ζ"  => Dict("long_name" => "Relative vorticity", "units" => "1/s"),
+    "zeta"  => Dict("long_name" => "Relative vorticity", "units" => "1/s"),
     "s"  => Dict("long_name" => "Speed", "units" => "m/s"),
+    "eta"  => Dict("long_name" => "Sea surface height", "units" => "m"),
 )
 
 # Remove netCDF file if it already exists 
