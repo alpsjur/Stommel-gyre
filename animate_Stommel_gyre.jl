@@ -3,7 +3,7 @@ using Oceananigans.Units
 using Printf
 using CairoMakie
 
-dataname = "nonlinear_stommel_gyre_output.jld2"
+dataname = "linear_stommel_gyre_output.jld2"
 datapath = "data/"
 figpath = "figures/"
 
@@ -69,7 +69,7 @@ Colorbar(fig[2, 2], hm_s)
 hm_η = heatmap!(ax_η, xc*1e-3, yc*1e-3, ηₙ; colorrange = (-ηlim,ηlim), colormap = :balance)
 c_η = contour!(ax_η, xc*1e-3, yc*1e-3, ηₙ; 
     color = "black", 
-    levels = [-0.06, -0.03, 0, 0.03, 0.06]
+    levels = [-0.03, -0.02, -0.01, 0, 0.01, 0.02, 0.03]
 )
 Colorbar(fig[2, 4], hm_η)
 
@@ -77,7 +77,7 @@ Colorbar(fig[2, 4], hm_η)
 frames = 1:length(times)-1
 
 # Record the animation, updating the figure for each time step
-record(fig, figpath*"animated_nonlinear_Stommel_gyre.mp4", frames, framerate=8) do i
+CairoMakie.record(fig, figpath*"animated_linear_Stommel_gyre.mp4", frames, framerate=8) do i
     msg = string("Plotting frame ", i, " of ", frames[end])
     print(msg * " \r")  # Log progress without creating a new line for each frame
     n[] = i             # Update the observable to the current frame index

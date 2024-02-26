@@ -51,9 +51,9 @@ same logic holds for east, west, north, and south boundaries.
 const τ₀ = 0.1       # Maximum wind stress [Nm⁻²]
 const ρ = 1025       # Density of seawater [kgm⁻³]
 const T = 10days     # Timecale for initial increasing surface forcing
-u_surface_stress(x, y, t) = τ₀ * cos(π * y / Ly) / ρ * tanh(t/T)
-u_surface_bc  = FluxBoundaryCondition(u_surface_stress)
+u_surface_stress(x, y, t) = -τ₀ * cos(π * y*2 / (Ly)) / ρ * tanh(t/T) # minus sign comes from the sign convention described above
 
+u_surface_bc  = FluxBoundaryCondition(u_surface_stress)   
 # plot forcing
 figpath = "figures/"
 
@@ -67,16 +67,16 @@ x, y, z = nodes(grid, (Center(), Center(), Center()))
 
 fig = Figure()
 ax = Axis(fig[1, 1], ylabel = "y [km]", xlabel = "Wind stress [Nm⁻²]")
-lines!(ax, -τ*ρ, y/1000)              # minus sign comes from the sign convention described above
+lines!(ax, -τ*ρ, y/1000)              
 save(figpath*"surface_forcing.png", fig)
 
 # Define linear bottom drag
 const R = Lz/(60days)
-u_bottom_drag(x, y, t, u) = -R*u
-v_bottom_drag(x, y, t, v) = -R*v
+u_bottom_stress(x, y, t, u) = -R*u
+v_bottom_stress(x, y, t, v) = -R*v
 
-u_bottom_bc = FluxBoundaryCondition(u_bottom_drag, field_dependencies=:u)
-v_bottom_bc = FluxBoundaryCondition(v_bottom_drag, field_dependencies=:v)
+u_bottom_bc = FluxBoundaryCondition(u_bottom_stress, field_dependencies=:u)
+v_bottom_bc = FluxBoundaryCondition(v_bottom_stress, field_dependencies=:v)
 
 # Define horizontal boundary condition
 #horizontal_bc = ValueBoundaryCondition(0.0)  # No-slip boundary condition
@@ -113,7 +113,7 @@ model = HydrostaticFreeSurfaceModel(; grid,
 
 # set up simulation
 Δt = 20minutes           # time step 
-stop_time = 100days      # total simulation time 
+stop_time = 2*365days      # total simulation time 
 simulation = Simulation(model, Δt=Δt, stop_time=stop_time) 
 
 # logging simulation progress
@@ -127,14 +127,14 @@ progress(sim) = @printf(
     prettytime(1e-9 * (time_ns() - start_time))
 )
 
-simulation.callbacks[:progress] = Callback(progress, IterationInterval(100))
+simulation.callbacks[:progress] = Callback(progress, IterationInterval(1day/Δt))
 
 
 # Add output writers for saving simulation output
 save_interval = 1day
 
 datapath = "data/"
-filename = "stommel_gyre_output"
+filename = "linear_double_stommel_gyre_output"
 filepath = datapath*filename
 
 #check if directory datapath exists. Creates it if it does not exist 

@@ -9,6 +9,12 @@ The Stommel gyre is a basic model of ocean circulation in a rectangular basin fo
 To be included.
 
 ## Instructions to run the model
-To be included. 
+
+### First time
+1. Make sure Julia is installed. You can find instructions on how to install the latest Julia version [here](https://julialang.org/downloads/ "Julia install site").
+
+2. Clone this git repository to your local computer.
+
+3. Open a Terminal and `cd` into the repository. 
 
 
