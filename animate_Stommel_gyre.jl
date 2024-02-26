@@ -3,7 +3,7 @@ using Oceananigans.Units
 using Printf
 using CairoMakie
 
-dataname = "linear_stommel_gyre_output.jld2"
+dataname = "nonlinear_double_stommel_gyre"
 datapath = "data/"
 figpath = "figures/"
 
@@ -12,7 +12,7 @@ if !isdir(figpath)
     mkdir(figpath)
 end
 
-filepath = datapath*dataname
+filepath = datapath*dataname*"_output.jld2"
 
 s_timeseries = FieldTimeSeries(filepath, "s")
 u_timeseries = FieldTimeSeries(filepath, "u")
@@ -77,7 +77,7 @@ Colorbar(fig[2, 4], hm_η)
 frames = 1:length(times)-1
 
 # Record the animation, updating the figure for each time step
-CairoMakie.record(fig, figpath*"animated_linear_Stommel_gyre.mp4", frames, framerate=8) do i
+CairoMakie.record(fig, figpath*"animated_"*dataname*".mp4", frames, framerate=8) do i
     msg = string("Plotting frame ", i, " of ", frames[end])
     print(msg * " \r")  # Log progress without creating a new line for each frame
     n[] = i             # Update the observable to the current frame index

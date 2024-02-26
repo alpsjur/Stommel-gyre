@@ -5,11 +5,11 @@ using CairoMakie               # plotting
 using CUDA                     # for running on GPU
 
 const Lx = 2000kilometers
-const Ly = 2000kilometers
+const Ly = 3*2000kilometers
 const Lz =    4kilometers
 
 const Nx = 128
-const Ny = 128
+const Ny = 3*128
 
 
 # Run on GPU (wow, fast!) if available. Else run on CPU
@@ -51,7 +51,7 @@ same logic holds for east, west, north, and south boundaries.
 const τ₀ = 0.1       # Maximum wind stress [Nm⁻²]
 const ρ = 1025       # Density of seawater [kgm⁻³]
 const T = 10days     # Timecale for initial increasing surface forcing
-u_surface_stress(x, y, t) = -τ₀ * cos(π * y*2 / (Ly)) / ρ * tanh(t/T) # minus sign comes from the sign convention described above
+u_surface_stress(x, y, t) = τ₀*cos(π*y*3/Ly)/ρ * tanh(t/T) # minus sign comes from the sign convention described above
 
 u_surface_bc  = FluxBoundaryCondition(u_surface_stress)   
 # plot forcing
@@ -134,7 +134,7 @@ simulation.callbacks[:progress] = Callback(progress, IterationInterval(1day/Δt)
 save_interval = 1day
 
 datapath = "data/"
-filename = "linear_double_stommel_gyre_output"
+filename = "linear_triple_stommel_gyre_output"
 filepath = datapath*filename
 
 #check if directory datapath exists. Creates it if it does not exist 
