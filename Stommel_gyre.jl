@@ -4,12 +4,12 @@ using Printf                   # formatting text
 using CairoMakie               # plotting
 using CUDA                     # for running on GPU
 
-const Lx = 2000kilometers
-const Ly = 3*2000kilometers
+const Lx = 1000kilometers
+const Ly = 2000kilometers
 const Lz =    4kilometers
 
 const Nx = 128
-const Ny = 3*128
+const Ny = 128
 
 
 # Run on GPU (wow, fast!) if available. Else run on CPU
@@ -48,7 +48,7 @@ same logic holds for east, west, north, and south boundaries.
 """
 
 # Define the wind stress forcing
-const τ₀ = 0.1       # Maximum wind stress [Nm⁻²]
+const τ₀ = 0.2       # Maximum wind stress [Nm⁻²]
 const ρ = 1025       # Density of seawater [kgm⁻³]
 const T = 10days     # Timecale for initial increasing surface forcing
 u_surface_stress(x, y, t) = τ₀*cos(π*y*3/Ly)/ρ * tanh(t/T) # minus sign comes from the sign convention described above
@@ -71,7 +71,7 @@ lines!(ax, -τ*ρ, y/1000)
 save(figpath*"surface_forcing.png", fig)
 
 # Define linear bottom drag
-const R = Lz/(60days)
+const R = Lz/(120days)
 u_bottom_stress(x, y, t, u) = -R*u
 v_bottom_stress(x, y, t, v) = -R*v
 
@@ -106,7 +106,7 @@ coriolis = BetaPlane(f₀=f₀, β=β)
 model = HydrostaticFreeSurfaceModel(; grid,
                           coriolis = coriolis,
                           boundary_conditions = (u=u_bcs, v=v_bcs),
-                          momentum_advection = nothing,
+                          #momentum_advection = nothing,
                           #closure = ScalarDiffusivity(ν=2e-4, κ=2e-4),
                           )
 
@@ -134,7 +134,7 @@ simulation.callbacks[:progress] = Callback(progress, IterationInterval(1day/Δt)
 save_interval = 1day
 
 datapath = "data/"
-filename = "linear_triple_stommel_gyre_output"
+filename = "nonlinear_triple_stommel_gyre_output"
 filepath = datapath*filename
 
 #check if directory datapath exists. Creates it if it does not exist 
@@ -143,7 +143,7 @@ if !isdir(datapath)
 end
 
 u, v, w = model.velocities
-η = Average(model.free_surface.η, dims=3)
+η = Average(model.free_surface.η, dims=3)  # Average over z to get 2D field
 ζ = Field(∂x(v) - ∂y(u))
 s = Field(sqrt(u^2 + v^2))
 
@@ -162,7 +162,7 @@ simulation.output_writers[:JLD2] = JLD2OutputWriter(
 outputs = Dict(
     "u" => u, 
     "v" => v,  
-    "eta" => η,     # Oceananigans throws error for writing η. Related to problem with JLD2 when halos not included?
+    "eta" => η,     
     "zeta" => ζ,
     "s" => s,
     )
@@ -170,7 +170,7 @@ outputs = Dict(
 output_attributes = Dict(
     "zeta"  => Dict("long_name" => "Relative vorticity", "units" => "1/s"),
     "s"  => Dict("long_name" => "Speed", "units" => "m/s"),
-    "eta"  => Dict("long_name" => "Sea surface height", "units" => "m"),
+    "eta"  => Dict("long_name" => "Free surface height", "units" => "m"),
 )
 
 # Remove netCDF file if it already exists 
