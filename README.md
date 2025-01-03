@@ -6,9 +6,9 @@ The Stommel gyre is a basic model of ocean circulation in a rectangular basin, f
 ## Theory
 
 The Stommel gyre is governed by the barotropic vorticity equation:
-$$
-\frac{\partial \zeta}{\partial t} + J(\psi, \zeta) = \frac{\beta \psi_x}{H} - \frac{\zeta}{R} + \nabla^2 \zeta + \frac{\nabla \times \tau}{\rho H},
-$$
+
+$$\frac{\partial \zeta}{\partial t} + J(\psi, \zeta) = \frac{\beta \psi_x}{H} - \frac{\zeta}{R} + \nabla^2 \zeta + \frac{\nabla \times \tau}{\rho H}$$
+
 where:
 - $\zeta = \nabla^2 \psi$: The vorticity.
 - $\psi$: The streamfunction, related to the velocity field as $u = -\partial \psi / \partial y$ and $v = \partial \psi / \partial x$.
