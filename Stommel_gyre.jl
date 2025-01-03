@@ -51,7 +51,7 @@ same logic holds for east, west, north, and south boundaries.
 const τ₀ = 0.2       # Maximum wind stress [Nm⁻²]
 const ρ = 1025       # Density of seawater [kgm⁻³]
 const T = 10days     # Timecale for initial increasing surface forcing
-u_surface_stress(x, y, t) = τ₀*cos(π*y*3/Ly)/ρ * tanh(t/T) # minus sign comes from the sign convention described above
+u_surface_stress(x, y, t) = τ₀*cos(π*y/Ly)/ρ * tanh(t/T) # minus sign comes from the sign convention described above
 
 u_surface_bc  = FluxBoundaryCondition(u_surface_stress)   
 # plot forcing
@@ -106,7 +106,7 @@ coriolis = BetaPlane(f₀=f₀, β=β)
 model = HydrostaticFreeSurfaceModel(; grid,
                           coriolis = coriolis,
                           boundary_conditions = (u=u_bcs, v=v_bcs),
-                          #momentum_advection = nothing,
+                          #momentum_advection = nothing,               # comment in for linear solution
                           #closure = ScalarDiffusivity(ν=2e-4, κ=2e-4),
                           )
 
@@ -127,14 +127,14 @@ progress(sim) = @printf(
     prettytime(1e-9 * (time_ns() - start_time))
 )
 
-simulation.callbacks[:progress] = Callback(progress, IterationInterval(1day/Δt))
+simulation.callbacks[:progress] = Callback(progress, IterationInterval(5days/Δt))
 
 
 # Add output writers for saving simulation output
 save_interval = 1day
 
 datapath = "data/"
-filename = "nonlinear_triple_stommel_gyre_output"
+filename = "nonlinear_stommel_gyre_output"
 filepath = datapath*filename
 
 #check if directory datapath exists. Creates it if it does not exist 
